@@ -4,13 +4,13 @@ SIZE=10
 for row in range(SIZE):
     world.append(["."] * SIZE)
 
-creature_x=3
-creature_y=5
+creature_x=random.randint(0, SIZE-1)
+creature_y=random.randint(0, SIZE-1)
 
 world[creature_y][creature_x]="C"
 
-food_x=1
-food_y=9
+food_x=random.randint(0, SIZE-1)
+food_y=random.randint(0, SIZE-1)
 
 world[food_y][food_x]="F"
 
@@ -25,11 +25,12 @@ for step in range(10):
     new_y=creature_y + dy
     if 0 <= new_x < SIZE and 0 <= new_y < SIZE:
         world[creature_y][creature_x]="."
-        if new_x == food_x and new_y == food_y:
-            print("The creature has found the food!")
         creature_x=new_x
         creature_y=new_y
         world[creature_y][creature_x]="C"
     for row in world:
         print(" ".join(row))
     print()
+    if new_x == food_x and new_y == food_y:
+        print("The creature has found the food!")
+        break
