@@ -53,26 +53,30 @@ while creature_energy > 0:
         creature_energy -= 1
         world[creature_y][creature_x]="C"
         
+
         if (creature_x, creature_y) in foods:
             print("The creature has found the food!")
             food_eaten += 1
             creature_energy = min(creature_energy + 5, MAX_ENERGY)
 
             foods.remove((creature_x, creature_y))
+
+            # Only respawn when ALL food has been eaten
             if len(foods) == 0:
+                print("All food has been eaten! Respawning food...")
                 last_position = None
 
-            while True:
-                food_x = random.randint(0, SIZE - 1)
-                food_y = random.randint(0, SIZE - 1)
+                while len(foods) < FOOD_COUNT:
+                    food_x = random.randint(0, SIZE - 1)
+                    food_y = random.randint(0, SIZE - 1)
 
-                if (
-                    (food_x, food_y) != (creature_x, creature_y)
-                    and (food_x, food_y) not in foods
-                ):
-                    foods.append((food_x, food_y))
-                    world[food_y][food_x] = "F"
-                    break
+                    if (
+                        (food_x, food_y) != (creature_x, creature_y)
+                        and (food_x, food_y) not in foods
+                    ):
+                        foods.append((food_x, food_y))
+                        world[food_y][food_x] = "F"
+
 
 
 
