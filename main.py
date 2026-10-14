@@ -7,13 +7,13 @@ for row in range(SIZE):
 creature_x=random.randint(0, SIZE-1)
 creature_y=random.randint(0, SIZE-1)
 
-world[creature_y][creature_x]="C"
+
 
 food_x=random.randint(0, SIZE-1)
 food_y=random.randint(0, SIZE-1)
 
 world[food_y][food_x]="F"
-
+world[creature_y][creature_x]="C"
 
 for row in world:
     print(" ".join(row))
