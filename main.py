@@ -59,7 +59,8 @@ while creature_energy > 0:
             creature_energy = min(creature_energy + 5, MAX_ENERGY)
 
             foods.remove((creature_x, creature_y))
-            last_position = None
+            if len(foods) == 0:
+                last_position = None
 
             while True:
                 food_x = random.randint(0, SIZE - 1)
