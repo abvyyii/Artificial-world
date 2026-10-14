@@ -34,14 +34,19 @@ for row in world:
 print()
 print("-------------------------------------------------")
 
-
+last_position = None
 while creature_energy > 0:
     turns_survived += 1
-    dx, dy = random.choice([(0, 1), (0, -1), (1, 0), (-1, 0)])
-    new_x=creature_x + dx
-    new_y=creature_y + dy
+    while True:
+        dx, dy = random.choice([(0, 1), (0, -1), (1, 0), (-1, 0)])
+        new_x = creature_x + dx
+        new_y = creature_y + dy
+
+        if last_position is None or (new_x, new_y) != last_position:
+            break
 
     if 0 <= new_x < SIZE and 0 <= new_y < SIZE:
+        last_position = (creature_x, creature_y)
         world[creature_y][creature_x]="."
         creature_x=new_x
         creature_y=new_y
@@ -67,7 +72,6 @@ while creature_energy > 0:
                     world[food_y][food_x] = "F"
                     break
 
-            print(f"Creature's energy: {creature_energy}")
 
 
     else:
