@@ -1,99 +1,115 @@
 import random
-world=[]
 SIZE=10
-for row in range(SIZE):
-    world.append(["."] * SIZE)
-
-creature_x=random.randint(0, SIZE-1)
-creature_y=random.randint(0, SIZE-1)
-
 MAX_ENERGY=10
-creature_energy=MAX_ENERGY
-
-turns_survived=0
-walls_hit=0
-food_eaten=0
-
 FOOD_COUNT = 5
-foods = []
+DIRECTIONS = [(0, 1), (0, -1), (1, 0), (-1, 0)]
+FOOD_ENERGY = 5
 
-while len(foods) < FOOD_COUNT:
-    food_x = random.randint(0, SIZE - 1)
-    food_y = random.randint(0, SIZE - 1)
+class Creature:
+    def __init__(self, x , y):
+        self.x=x
+        self.y=y
+        self.energy=MAX_ENERGY
+        self.last_position=None
+        self.turns_survived=0
+        self.walls_hit=0
+        self.food_eaten=0
 
-    if (food_x, food_y) != (creature_x, creature_y) and (food_x, food_y) not in foods:
-        foods.append((food_x, food_y))
-        world[food_y][food_x] = "F"
+    def is_alive(self):
+        return self.energy > 0
 
+    def choose_move(self):
+        while True:
+            dx, dy = random.choice(DIRECTIONS)
+            new_x , new_y = self.x + dx, self.y + dy
 
-world[creature_y][creature_x]="C"
+            if self.last_position is None or (new_x, new_y) != self.last_position:
+                return new_x, new_y
 
-print(f"Creature's energy: {creature_energy}")
-for row in world:
-    print(" ".join(row))
-print()
-print("-------------------------------------------------")
+    def move(self, new_x, new_y):
+        self.last_position = (self.x, self.y)
+        self.x, self.y = new_x, new_y
+        self.energy -= 1
 
-last_position = None
-while creature_energy > 0:
-    turns_survived += 1
-    while True:
-        dx, dy = random.choice([(0, 1), (0, -1), (1, 0), (-1, 0)])
-        new_x = creature_x + dx
-        new_y = creature_y + dy
+    def hit_wall(self):
+        self.walls_hit += 1
+        self.energy -= 1
 
-        if last_position is None or (new_x, new_y) != last_position:
-            break
-
-    if 0 <= new_x < SIZE and 0 <= new_y < SIZE:
-        last_position = (creature_x, creature_y)
-        world[creature_y][creature_x]="."
-        creature_x=new_x
-        creature_y=new_y
-        creature_energy -= 1
-        world[creature_y][creature_x]="C"
-        
-
-        if (creature_x, creature_y) in foods:
-            print("The creature has found the food!")
-            food_eaten += 1
-            creature_energy = min(creature_energy + 5, MAX_ENERGY)
-
-            foods.remove((creature_x, creature_y))
-
-            # Only respawn when ALL food has been eaten
-            if len(foods) == 0:
-                print("All food has been eaten! Respawning food...")
-                last_position = None
-
-                while len(foods) < FOOD_COUNT:
-                    food_x = random.randint(0, SIZE - 1)
-                    food_y = random.randint(0, SIZE - 1)
-
-                    if (
-                        (food_x, food_y) != (creature_x, creature_y)
-                        and (food_x, food_y) not in foods
-                    ):
-                        foods.append((food_x, food_y))
-                        world[food_y][food_x] = "F"
+    def eat_food(self):
+        self.food_eaten += 1
+        self.energy = min(self.energy + FOOD_ENERGY, MAX_ENERGY)
 
 
+def create_world():
+    world=[]
+    for _ in range(SIZE):
+        world.append(["."] * SIZE)
+    return world   
 
+def spawn_foods(world, creature):
+    creature.last_position = None   # respawn also resets this creature's memory
 
-    else:
-        print("The creature hit the wall and lost energy.")
-        print()
-        creature_energy -= 1
-        walls_hit += 1
+    foods = []
+    while len(foods) < FOOD_COUNT:
+        food_x = random.randint(0, SIZE - 1)
+        food_y = random.randint(0, SIZE - 1)
 
-    print(f"Creature's energy: {creature_energy}")
+        if (food_x, food_y) != (creature.x, creature.y) and (food_x, food_y) not in foods:
+            foods.append((food_x, food_y))
+            world[food_y][food_x] = "F"
+    return foods
 
+def in_bounds(x, y):
+    return 0 <= x < SIZE and 0 <= y < SIZE
+
+def print_world(world, creature):
+    print(f"Creature's energy: {creature.energy}")
     for row in world:
         print(" ".join(row))
-    print("-------------------------------------------------")
+    print("-"*50)
     print()
-print("The creature has run out of energy!")
-print("the creature has died. GAME OVER")
-print(f"Turns survived: {turns_survived}")
-print(f"Walls hit: {walls_hit}")
-print(f"Food eaten: {food_eaten}")
+
+def main():
+    world = create_world()
+    print("Welcome to the Artificial World Simulation!")
+
+    creature = Creature(random.randint(0, SIZE - 1), random.randint(0, SIZE - 1))
+    foods = spawn_foods(world, creature)
+    world[creature.y][creature.x] = "C"
+    print_world(world, creature)
+
+    while creature.is_alive():
+        creature.turns_survived += 1
+        new_x, new_y = creature.choose_move()
+
+        if in_bounds(new_x, new_y):
+            world[creature.y][creature.x] = "."
+            creature.move(new_x, new_y)
+            world[creature.y][creature.x] = "C"
+
+            if (creature.x, creature.y) in foods:
+                print("The creature has found the food!")
+                creature.eat_food()
+                foods.remove((creature.x, creature.y))
+
+                if not foods:
+                    print("All food has been eaten! Respawning food...")
+                    foods = spawn_foods(world, creature)   # also resets last_position
+        else:
+            print("The creature hit the wall and lost energy.")
+            print()
+            creature.hit_wall()
+
+        print_world(world, creature)
+
+    print("The creature has run out of energy!")
+    print("The creature has died. GAME OVER")
+    print("-"*50)
+    print("Final Stats::")
+    print(f"Turns survived: {creature.turns_survived}")
+    print(f"Walls hit: {creature.walls_hit}")
+    print(f"Food eaten: {creature.food_eaten}")
+
+
+if __name__ == "__main__":
+    main()
