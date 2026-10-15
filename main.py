@@ -46,72 +46,83 @@ def create_world():
         world.append(["."] * SIZE)
     return world
 
-def spawn_foods(creature):
-    creature.last_position = None
+def spawn_foods(creatures):
+    for creature in creatures:
+        creature.last_position = None
 
+    occupied = {(c.x, c.y) for c in creatures}
     foods = []
     while len(foods) < FOOD_COUNT:
         food_x = random.randint(0, SIZE - 1)
         food_y = random.randint(0, SIZE - 1)
 
-        if (food_x, food_y) != (creature.x, creature.y) and (food_x, food_y) not in foods:
+        if (food_x, food_y) not in occupied and (food_x, food_y) not in foods:
             foods.append((food_x, food_y))
     return foods
 
 def in_bounds(x, y):
     return 0 <= x < SIZE and 0 <= y < SIZE
 
-def build_grid(creature, foods):
+def build_grid(creatures, foods):
     grid = create_world()
     for food_x, food_y in foods:
         grid[food_y][food_x] = "F"
-    grid[creature.y][creature.x] = "C"
+    for creature in creatures:
+        grid[creature.y][creature.x] = "C"
     return grid
 
-def print_world(creature, foods):
-    print(f"Creature's energy: {creature.energy}")
-    for row in build_grid(creature, foods):
+def print_world(creatures, foods):
+    for i, creature in enumerate(creatures):
+        print(f"Creature {i + 1} energy: {creature.energy}")
+    for row in build_grid(creatures, foods):
         print(" ".join(row))
     print("-"*50)
     print()
 
+def take_turn(creature, creatures, foods):
+    creature.turns_survived += 1
+    new_x, new_y = creature.choose_move()
+
+    if in_bounds(new_x, new_y):
+        creature.move(new_x, new_y)
+
+        if (creature.x, creature.y) in foods:
+            print("The creature has found the food!")
+            creature.eat_food()
+            foods.remove((creature.x, creature.y))
+
+            if not foods:
+                print("All food has been eaten! Respawning food...")
+                foods = spawn_foods(creatures)
+    else:
+        print("The creature hit the wall and lost energy.")
+        print()
+        creature.hit_wall()
+
+    return foods
+
 def main():
-    random.seed(42)  # For reproducibility
     print("Welcome to the Artificial World Simulation!")
 
-    creature = Creature(random.randint(0, SIZE - 1), random.randint(0, SIZE - 1))
-    foods = spawn_foods(creature)
-    print_world(creature, foods)
+    creatures = [Creature(random.randint(0, SIZE - 1), random.randint(0, SIZE - 1))]
+    foods = spawn_foods(creatures)
+    print_world(creatures, foods)
 
-    while creature.is_alive():
-        creature.turns_survived += 1
-        new_x, new_y = creature.choose_move()
-
-        if in_bounds(new_x, new_y):
-            creature.move(new_x, new_y)
-
-            if (creature.x, creature.y) in foods:
-                print("The creature has found the food!")
-                creature.eat_food()
-                foods.remove((creature.x, creature.y))
-
-                if not foods:
-                    print("All food has been eaten! Respawning food...")
-                    foods = spawn_foods(creature)
-        else:
-            print("The creature hit the wall and lost energy.")
-            print()
-            creature.hit_wall()
-
-        print_world(creature, foods)
+    while any(c.is_alive() for c in creatures):
+        for creature in creatures:
+            if creature.is_alive():
+                foods = take_turn(creature, creatures, foods)
+        print_world(creatures, foods)
 
     print("The creature has run out of energy!")
     print("The creature has died. GAME OVER")
     print("-"*50)
     print("Final Stats::")
-    print(f"Turns survived: {creature.turns_survived}")
-    print(f"Walls hit: {creature.walls_hit}")
-    print(f"Food eaten: {creature.food_eaten}")
+    for i, creature in enumerate(creatures):
+        print(f"Creature {i + 1}")
+        print(f"Turns survived: {creature.turns_survived}")
+        print(f"Walls hit: {creature.walls_hit}")
+        print(f"Food eaten: {creature.food_eaten}")
 
 
 if __name__ == "__main__":
