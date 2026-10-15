@@ -44,10 +44,10 @@ def create_world():
     world=[]
     for _ in range(SIZE):
         world.append(["."] * SIZE)
-    return world   
+    return world
 
-def spawn_foods(world, creature):
-    creature.last_position = None   # respawn also resets this creature's memory
+def spawn_foods(creature):
+    creature.last_position = None
 
     foods = []
     while len(foods) < FOOD_COUNT:
@@ -56,36 +56,39 @@ def spawn_foods(world, creature):
 
         if (food_x, food_y) != (creature.x, creature.y) and (food_x, food_y) not in foods:
             foods.append((food_x, food_y))
-            world[food_y][food_x] = "F"
     return foods
 
 def in_bounds(x, y):
     return 0 <= x < SIZE and 0 <= y < SIZE
 
-def print_world(world, creature):
+def build_grid(creature, foods):
+    grid = create_world()
+    for food_x, food_y in foods:
+        grid[food_y][food_x] = "F"
+    grid[creature.y][creature.x] = "C"
+    return grid
+
+def print_world(creature, foods):
     print(f"Creature's energy: {creature.energy}")
-    for row in world:
+    for row in build_grid(creature, foods):
         print(" ".join(row))
     print("-"*50)
     print()
 
 def main():
-    world = create_world()
+    random.seed(42)  # For reproducibility
     print("Welcome to the Artificial World Simulation!")
 
     creature = Creature(random.randint(0, SIZE - 1), random.randint(0, SIZE - 1))
-    foods = spawn_foods(world, creature)
-    world[creature.y][creature.x] = "C"
-    print_world(world, creature)
+    foods = spawn_foods(creature)
+    print_world(creature, foods)
 
     while creature.is_alive():
         creature.turns_survived += 1
         new_x, new_y = creature.choose_move()
 
         if in_bounds(new_x, new_y):
-            world[creature.y][creature.x] = "."
             creature.move(new_x, new_y)
-            world[creature.y][creature.x] = "C"
 
             if (creature.x, creature.y) in foods:
                 print("The creature has found the food!")
@@ -94,13 +97,13 @@ def main():
 
                 if not foods:
                     print("All food has been eaten! Respawning food...")
-                    foods = spawn_foods(world, creature)   # also resets last_position
+                    foods = spawn_foods(creature)
         else:
             print("The creature hit the wall and lost energy.")
             print()
             creature.hit_wall()
 
-        print_world(world, creature)
+        print_world(creature, foods)
 
     print("The creature has run out of energy!")
     print("The creature has died. GAME OVER")
